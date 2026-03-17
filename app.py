@@ -1,17 +1,36 @@
 import os
 import random
 import ast
+import re
 import pandas as pd
+from difflib import SequenceMatcher
 from flask import Flask, render_template, request, jsonify, session
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_for_movie_game'
 
-# Load the dataset once when the server starts
+# Load dataset
 df = pd.read_csv('filtered.csv')
 
+
+# ================================
+# 🔍 Text Normalization
+# ================================
+def normalize(text):
+    return re.sub(r'[^a-z0-9]', '', text.lower())
+
+
+# ================================
+# 🤖 Fuzzy Match Function
+# ================================
+def is_close_match(a, b, threshold=0.8):
+    return SequenceMatcher(None, a, b).ratio() >= threshold
+
+
+# ================================
+# 🎬 Get Random Movie
+# ================================
 def get_random_movie():
-    # Sample based on Score column
     movie_row = df.sample(n=1, weights='Score').iloc[0]
     
     title = str(movie_row['Title']).strip()
@@ -31,6 +50,10 @@ def get_random_movie():
     random.shuffle(hints_list)
     return title, year, genre, hints_list
 
+
+# ================================
+# 🔤 Display Hidden Title
+# ================================
 def generate_display_name(title, revealed_indices):
     display = []
     for i, char in enumerate(title):
@@ -43,9 +66,14 @@ def generate_display_name(title, revealed_indices):
             display.append(char)
     return "".join(display)
 
+
+# ================================
+# 🏠 Routes
+# ================================
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/api/start', methods=['POST'])
 def start_game():
@@ -69,18 +97,21 @@ def start_game():
         'turn': 1
     })
 
+
 @app.route('/api/guess', methods=['POST'])
 def guess():
     data = request.json
-    user_guess = data.get('guess', '').strip().lower()
+    user_guess = data.get('guess', '').strip()
     
     if 'target_movie' not in session:
         return jsonify({'error': 'Game not started'}), 400
         
     target_movie = session['target_movie']
     
-    # Check if guess is correct
-    if user_guess == target_movie.lower():
+    # ================================
+    # ✅ FUZZY MATCH CHECK
+    # ================================
+    if is_close_match(normalize(user_guess), normalize(target_movie)):
         return jsonify({
             'status': 'win',
             'movie': target_movie
@@ -95,10 +126,13 @@ def guess():
             'movie': target_movie
         })
         
-    # Reveal a random hidden letter if turn >= 2 (so playing for turn 3, 4, 5, 6, 7)
+    # Reveal random letter after 2nd turn
     if turn >= 2:
         revealed = session['revealed_indices']
-        unrevealed = [i for i, char in enumerate(target_movie) if char.isalnum() and i not in revealed]
+        unrevealed = [
+            i for i, char in enumerate(target_movie)
+            if char.isalnum() and i not in revealed
+        ]
         if unrevealed:
             reveal_idx = random.choice(unrevealed)
             revealed.append(reveal_idx)
@@ -106,11 +140,16 @@ def guess():
             
     session['turn'] = turn + 1
     
-    display_name = generate_display_name(target_movie, session['revealed_indices'])
-    hints = session['hints']
+    display_name = generate_display_name(
+        target_movie,
+        session['revealed_indices']
+    )
     
-    # Cycle through hints safely
-    next_hint = hints[(session['turn'] - 1) % len(hints)] if hints else "No hints available!"
+    hints = session['hints']
+    next_hint = (
+        hints[(session['turn'] - 1) % len(hints)]
+        if hints else "No hints available!"
+    )
     
     return jsonify({
         'status': 'continue',
@@ -118,6 +157,7 @@ def guess():
         'hint': next_hint,
         'turn': session['turn']
     })
+
 
 @app.route('/api/giveup', methods=['POST'])
 def giveup():
@@ -129,5 +169,9 @@ def giveup():
         'movie': session['target_movie']
     })
 
+
+# ================================
+# 🚀 Run App
+# ================================
 if __name__ == '__main__':
     app.run(debug=True)
