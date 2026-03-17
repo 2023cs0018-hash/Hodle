@@ -156,3 +156,105 @@ h1 {
     background: #d90429;
     box-shadow: 0 5px 15px rgba(239, 35, 60, 0.4);
 }
+/* ============================= */
+/* 📱 Mobile Devices (≤ 600px) */
+/* ============================= */
+@media (max-width: 600px) {
+
+    .container {
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+    }
+
+    .movie-info {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .display-name {
+        font-size: 1.8rem;
+        letter-spacing: 4px;
+    }
+
+    .hint-container {
+        padding: 15px;
+    }
+
+    .guess-section {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #guess-input {
+        width: 100%;
+        font-size: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+        font-size: 1rem;
+        padding: 10px;
+    }
+
+    #end-screen h2 {
+        font-size: 2rem;
+    }
+
+    #end-screen p {
+        font-size: 1.2rem;
+    }
+
+    .highlight {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================= */
+/* 📲 Tablets (601px – 900px) */
+/* ============================= */
+@media (min-width: 601px) and (max-width: 900px) {
+
+    .container {
+        padding: 30px;
+        max-width: 85%;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+    }
+
+    .display-name {
+        font-size: 2.2rem;
+        letter-spacing: 6px;
+    }
+
+    .btn {
+        font-size: 1.1rem;
+    }
+}
+
+/* ============================= */
+/* 💻 Large Screens (≥ 1200px) */
+/* ============================= */
+@media (min-width: 1200px) {
+
+    .container {
+        max-width: 800px;
+        padding: 50px;
+    }
+
+    h1 {
+        font-size: 3rem;
+    }
+
+    .display-name {
+        font-size: 3rem;
+        letter-spacing: 10px;
+    }
+}
